@@ -1,0 +1,23 @@
+# Prebuilt binary artifacts are stored with Git LFS. Text stays in normal Git:
+# shader source (*.slang), headers (*.h), VERSION.txt, LICENSE.md, README.md.
+
+# Shared and static libraries
+*.dll          filter=lfs diff=lfs merge=lfs -text
+*.dylib        filter=lfs diff=lfs merge=lfs -text
+*.so           filter=lfs diff=lfs merge=lfs -text
+*.so.*         filter=lfs diff=lfs merge=lfs -text
+*.a            filter=lfs diff=lfs merge=lfs -text
+*.lib          filter=lfs diff=lfs merge=lfs -text
+
+# Executables, debug symbols, and other binary payloads
+*.exe          filter=lfs diff=lfs merge=lfs -text
+*.pdb          filter=lfs diff=lfs merge=lfs -text
+*.metallib     filter=lfs diff=lfs merge=lfs -text
+*.slang-module filter=lfs diff=lfs merge=lfs -text
+
+# Extensionless Unix tool executables. These have no extension for a glob to catch,
+# so match them by exact name. A bare name matches a file, never the *.slang source.
+slang          filter=lfs diff=lfs merge=lfs -text
+slangc         filter=lfs diff=lfs merge=lfs -text
+slangd         filter=lfs diff=lfs merge=lfs -text
+slangi         filter=lfs diff=lfs merge=lfs -text

@@ -1,0 +1,11 @@
+# OS and editor cruft only. Every artifact the SDK ships is tracked explicitly,
+# so this list stays deliberately small.
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+Thumbs.db
+Desktop.ini
+*.swp
+*~
