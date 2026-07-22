@@ -5,6 +5,7 @@ import glob as globlib
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -151,6 +152,19 @@ def resolve_one(root: Path, pattern: str) -> list[Path]:
     return [Path(p) for p in globlib.glob(str(root / pattern), recursive=True)]
 
 
+LICENSE_NAME = re.compile(r"^(licen[sc]e|copying|notice|unlicense)([._-].*)?$", re.IGNORECASE)
+
+
+def discover_license(exdir: Path) -> Path | None:
+    # Fallback when an output declares no explicit license: pick the shallowest
+    # file whose name looks like a license, so a library's own top-level license
+    # wins over any third-party ones bundled deeper in the archive.
+    cands = [p for p in exdir.rglob("*") if p.is_file() and LICENSE_NAME.match(p.name)]
+    if not cands:
+        return None
+    return min(cands, key=lambda p: (len(p.relative_to(exdir).parts), len(p.name)))
+
+
 def thin(path: Path, dest: Path, arch: str) -> bool:
     tool = shutil.which("lipo") or shutil.which("llvm-lipo")
     if not tool:
@@ -210,17 +224,29 @@ def apply_output(exdir: Path, out: dict, arch: str, os_: str, version: str,
                 shutil.copy2(h, root / inc["to"] / h.name)
 
     lic = per_os(out.get("license"), os_)
+    licdir = per_os(out.get("license_dir"), os_)
+    carried = False
     if lic:
         hits = resolve_one(exdir, sub(lic["in"], tokens))
-        if hits:
-            (root / lic["to"]).parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(hits[0], root / lic["to"])
+        if not hits:
+            sys.exit(f"license '{lic['in']}' not found for {out['name']} [{arch}/{os_}]")
+        (root / lic["to"]).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(hits[0], root / lic["to"])
+        carried = True
 
-    licdir = per_os(out.get("license_dir"), os_)
     if licdir:
+        # Supplementary bundle of per-dependency license texts. Not every archive
+        # ships it, so absence is fine as long as a primary license is carried.
         hits = [h for h in resolve_one(exdir, sub(licdir["from"], tokens)) if h.is_dir()]
         if hits:
             shutil.copytree(hits[0], root / licdir["to"], dirs_exist_ok=True)
+            carried = True
+
+    if not carried:
+        found = discover_license(exdir)
+        if found is None:
+            sys.exit(f"no license found for {out['name']} [{arch}/{os_}]; add a 'license' to the manifest")
+        shutil.copy2(found, root / "LICENSE")
 
     (root / "VERSION.txt").write_text(version + "\n", encoding="utf-8")
 

@@ -80,6 +80,7 @@
         {
           "tree": "lib", "name": "KTX", "link": "shared",
           "include": { "from": "**/include", "to": "include" },
+          "license": { "in": "**/share/doc/KTX-Software/html/license.html", "to": "LICENSE.html" },
           "in": {
             "win32":  ["**/bin/ktx.dll", "**/lib/ktx.lib"],
             "darwin": ["**/lib/libktx.*.dylib"],
@@ -99,6 +100,7 @@
         {
           "tree": "lib", "name": "XeSS", "link": "shared",
           "include": { "from": "inc", "to": "include" },
+          "license": { "in": "LICENSE.txt", "to": "LICENSE.md" },
           "in": { "win32": ["bin/libxess.dll", "lib/libxess.lib"] }
         }
       ]
@@ -115,6 +117,7 @@
         {
           "tree": "lib", "name": "WinPixEventRuntime", "link": "shared",
           "include": { "from": "Include/WinPixEventRuntime", "to": "include/WinPixEventRuntime" },
+          "license": { "in": "license.txt", "to": "LICENSE.md" },
           "in": { "win32": ["bin/{pkg_arch}/WinPixEventRuntime.dll", "bin/{pkg_arch}/WinPixEventRuntime.lib"] }
         }
       ]
@@ -135,6 +138,7 @@
         {
           "tree": "lib", "name": "FSR", "link": "shared",
           "include": { "from": "**/Kits/FidelityFX/api/include", "to": "include" },
+          "license": { "in": "**/Kits/FidelityFX/docs/license.md", "to": "LICENSE.md" },
           "in": {
             "win32": [
               "**/Samples/Upscalers/FidelityFX_FSR/dx12/x64/Release/amd_fidelityfx_loader_dx12.dll",
@@ -148,28 +152,21 @@
     },
 
     "MoltenVK": {
-      "source": "build",
+      "source": "prebuilt",
       "version": "1.4.1",
-      "upstream": { "git": "https://github.com/KhronosGroup/MoltenVK.git", "tag": "v1.4.1" },
-      "platforms": [
-        { "arch": "x64", "os": "darwin" },
-        { "arch": "aarch64", "os": "darwin" }
-      ],
-      "build": {
-        "darwin": [
-          "cd \"$SRC\" && ./fetchDependencies --macos",
-          "cd \"$SRC\" && make macos"
-        ]
+      "assets": {
+        "x64/darwin":     { "url": "https://github.com/KhronosGroup/MoltenVK/releases/download/v1.4.1/MoltenVK-macos.tar", "archive": "tar" },
+        "aarch64/darwin": { "url": "https://github.com/KhronosGroup/MoltenVK/releases/download/v1.4.1/MoltenVK-macos.tar", "archive": "tar" }
       },
       "outputs": [
         {
           "tree": "lib", "name": "MoltenVK", "link": "shared",
-          "include": { "from": "Package/Release/MoltenVK/include/MoltenVK", "to": "include/MoltenVK" },
-          "license": { "in": "LICENSE", "to": "LICENSE.md" },
+          "include": { "from": "**/include/MoltenVK", "to": "include/MoltenVK" },
+          "license": { "in": "MoltenVK/LICENSE", "to": "LICENSE.md" },
           "in": {
             "darwin": [
-              "Package/Release/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib",
-              "Package/Release/MoltenVK/dynamic/dylib/macOS/MoltenVK_icd.json"
+              "**/dynamic/dylib/macOS/libMoltenVK.dylib",
+              "**/dynamic/dylib/macOS/MoltenVK_icd.json"
             ]
           }
         }
