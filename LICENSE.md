@@ -24,13 +24,7 @@ Proprietary, redistributable in binary form under the vendor's terms:
 Both proprietary items permit redistribution of the binaries as provided, without modification, on
 the condition that the vendor's copyright notice and license text travel with them. That condition
 is met by keeping each vendor's LICENSE.md (and any third-party notice) in place beside the
-binaries. Do not modify, reverse engineer, or repackage these two.
+binaries.
 
-Deliberately not vendored here are SDKs whose licenses forbid standalone redistribution, which the
-engine instead resolves at build time directly from the vendor. These include NVIDIA DLSS and
-Microsoft DirectStorage (each permits redistribution only when incorporated into a shipping
-application, not as a standalone SDK) and the Autodesk FBX SDK (download gated behind Autodesk's
-agreement). See README.md.
-
-The repository's own metadata (README.md, this file, .gitattributes, and .gitignore) is authored by
+The repository's own metadata (README.md, this file, .gitattributes, and .gitignore) and all files in vendor is authored by
 WizWorks and may be used freely.
