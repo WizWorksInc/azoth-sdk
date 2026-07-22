@@ -10,3 +10,7 @@ Desktop.ini
 *.swp
 *~
 ._azoth_sdk_done
+
+# Python bytecode from local vendor.py runs
+__pycache__/
+*.pyc

@@ -32,14 +32,13 @@
     "slang": {
       "source": "prebuilt",
       "version": "2026.12",
-      "linux_suffix": "-glibc-2.27",
       "assets": {
         "x64/win32":      { "url": "https://github.com/shader-slang/slang/releases/download/v2026.12/slang-2026.12-windows-x86_64.zip", "archive": "zip" },
         "aarch64/win32":  { "url": "https://github.com/shader-slang/slang/releases/download/v2026.12/slang-2026.12-windows-aarch64.zip", "archive": "zip" },
         "x64/darwin":     { "url": "https://github.com/shader-slang/slang/releases/download/v2026.12/slang-2026.12-macos-x86_64.zip", "archive": "zip" },
         "aarch64/darwin": { "url": "https://github.com/shader-slang/slang/releases/download/v2026.12/slang-2026.12-macos-aarch64.zip", "archive": "zip" },
         "x64/linux":      { "url": "https://github.com/shader-slang/slang/releases/download/v2026.12/slang-2026.12-linux-x86_64-glibc-2.27.zip", "archive": "zip" },
-        "aarch64/linux":  { "url": "https://github.com/shader-slang/slang/releases/download/v2026.12/slang-2026.12-linux-aarch64-glibc-2.27.zip", "archive": "zip" }
+        "aarch64/linux":  { "url": "https://github.com/shader-slang/slang/releases/download/v2026.12/slang-2026.12-linux-aarch64-glibc-2.28.zip", "archive": "zip" }
       },
       "outputs": [
         {
@@ -72,8 +71,8 @@
       "assets": {
         "x64/win32":      { "url": "https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Windows-x64.exe", "archive": "7z" },
         "aarch64/win32":  { "url": "https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Windows-arm64.exe", "archive": "7z" },
-        "x64/darwin":     { "url": "https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Darwin-x86_64.pkg", "archive": "7z" },
-        "aarch64/darwin": { "url": "https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Darwin-arm64.pkg", "archive": "7z" },
+        "x64/darwin":     { "url": "https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Darwin-x86_64.pkg", "archive": "pkg" },
+        "aarch64/darwin": { "url": "https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Darwin-arm64.pkg", "archive": "pkg" },
         "x64/linux":      { "url": "https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Linux-x86_64.tar.bz2", "archive": "tar.bz2" },
         "aarch64/linux":  { "url": "https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Linux-arm64.tar.bz2", "archive": "tar.bz2" }
       },
@@ -123,14 +122,22 @@
 
     "FSR": {
       "source": "prebuilt",
-      "version": "2.3.0",
+      "version": "2.0.0",
       "assets": {
-        "x64/win32": { "url": "https://github.com/GPUOpen-LibrariesAndSDKs/FidelityFX-SDK/releases/download/v2.3.0/FidelityFX-Samples-v2.3.0-prebuilt.zip", "archive": "zip" }
+        "x64/win32": { "url": "https://github.com/GPUOpen-LibrariesAndSDKs/FidelityFX-SDK/releases/download/v2.0.0/FidelityFX-SDK-v2.0.0.zip", "archive": "zip" }
       },
       "outputs": [
         {
           "tree": "lib", "name": "FSR", "link": "shared",
-          "in": { "win32": ["**/ffx_fsr2*.dll", "**/ffx_fsr2*.lib"] }
+          "include": { "from": "Kits/FidelityFX/api/include", "to": "include" },
+          "in": {
+            "win32": [
+              "Kits/FidelityFX/signedbin/amd_fidelityfx_loader_dx12.dll",
+              "Kits/FidelityFX/signedbin/amd_fidelityfx_loader_dx12.lib",
+              "Kits/FidelityFX/signedbin/amd_fidelityfx_upscaler_dx12.dll",
+              "Kits/FidelityFX/signedbin/amd_fidelityfx_framegeneration_dx12.dll"
+            ]
+          }
         }
       ]
     },

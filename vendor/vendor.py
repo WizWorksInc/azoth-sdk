@@ -130,6 +130,12 @@ def extract(archive: Path, kind: str, dest: Path) -> None:
             run(f'7z x -y -o"{dest}" "{archive}"', os.environ.copy())
     elif kind == "7z":
         run(f'7z x -y -o"{dest}" "{archive}"', os.environ.copy())
+    elif kind == "pkg":
+        # A macOS flat package is a xar holding component .pkg dirs, each with the
+        # real files in a gzipped cpio Payload. Unpack both layers.
+        run(f'7z x -y -o"{dest}" "{archive}"', os.environ.copy())
+        for payload in sorted(dest.rglob("Payload")):
+            run(f'bsdtar -xf "{payload}" -C "{payload.parent}"', os.environ.copy())
     else:
         sys.exit(f"unknown archive kind: {kind}")
 
@@ -150,7 +156,7 @@ def thin(path: Path, dest: Path, arch: str) -> bool:
     if not tool:
         return False
     info = subprocess.run([tool, "-info", str(path)], capture_output=True, text=True).stdout
-    if "fat file" not in info and "Non-fat" in info:
+    if "Non-fat" in info:
         return False
     if arch not in info:
         return False
