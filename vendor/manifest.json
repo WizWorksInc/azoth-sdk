@@ -1,0 +1,191 @@
+{
+  "sdk": { "repo": "WizWorksInc/azoth-sdk", "package": "azoth-sdk" },
+  "libraries": {
+    "SDL3": {
+      "source": "prebuilt",
+      "version": "3.4.12",
+      "assets": {
+        "x64/win32":     { "url": "https://github.com/libsdl-org/SDL/releases/download/release-3.4.12/SDL3-devel-3.4.12-VC.zip", "archive": "zip", "tokens": { "pkg_arch": "x64" } },
+        "aarch64/win32": { "url": "https://github.com/libsdl-org/SDL/releases/download/release-3.4.12/SDL3-devel-3.4.12-VC.zip", "archive": "zip", "tokens": { "pkg_arch": "arm64" } },
+        "x64/darwin":    { "url": "https://github.com/libsdl-org/SDL/releases/download/release-3.4.12/SDL3-3.4.12.dmg", "archive": "dmg" },
+        "aarch64/darwin":{ "url": "https://github.com/libsdl-org/SDL/releases/download/release-3.4.12/SDL3-3.4.12.dmg", "archive": "dmg" }
+      },
+      "outputs": [
+        {
+          "tree": "lib", "name": "SDL3", "link": "shared",
+          "in": {
+            "win32": ["SDL3-*/lib/{pkg_arch}/SDL3.dll", "SDL3-*/lib/{pkg_arch}/SDL3.lib", { "glob": "SDL3-*/lib/{pkg_arch}/SDL3.pdb", "optional": true }],
+            "darwin": [{ "glob": "**/SDL3.framework/Versions/A/SDL3", "as": "libSDL3.dylib" }, { "glob": "**/SDL3.framework/Versions/A/Resources/*.metallib", "optional": true }]
+          },
+          "include": {
+            "win32":  { "from": "SDL3-*/include/SDL3", "to": "include/SDL3" },
+            "darwin": { "from": "**/SDL3.framework/Versions/A/Headers", "to": "include/SDL3" }
+          },
+          "license": {
+            "win32":  { "in": "SDL3-*/LICENSE.txt", "to": "LICENSE.md" },
+            "darwin": { "in": "**/SDL3.framework/Versions/A/Resources/LICENSE.txt", "to": "LICENSE.md" }
+          }
+        }
+      ]
+    },
+
+    "slang": {
+      "source": "prebuilt",
+      "version": "2026.12",
+      "linux_suffix": "-glibc-2.27",
+      "assets": {
+        "x64/win32":      { "url": "https://github.com/shader-slang/slang/releases/download/v2026.12/slang-2026.12-windows-x86_64.zip", "archive": "zip" },
+        "aarch64/win32":  { "url": "https://github.com/shader-slang/slang/releases/download/v2026.12/slang-2026.12-windows-aarch64.zip", "archive": "zip" },
+        "x64/darwin":     { "url": "https://github.com/shader-slang/slang/releases/download/v2026.12/slang-2026.12-macos-x86_64.zip", "archive": "zip" },
+        "aarch64/darwin": { "url": "https://github.com/shader-slang/slang/releases/download/v2026.12/slang-2026.12-macos-aarch64.zip", "archive": "zip" },
+        "x64/linux":      { "url": "https://github.com/shader-slang/slang/releases/download/v2026.12/slang-2026.12-linux-x86_64-glibc-2.27.zip", "archive": "zip" },
+        "aarch64/linux":  { "url": "https://github.com/shader-slang/slang/releases/download/v2026.12/slang-2026.12-linux-aarch64-glibc-2.27.zip", "archive": "zip" }
+      },
+      "outputs": [
+        {
+          "tree": "lib", "name": "slang", "link": "shared",
+          "include": { "from": "include", "to": "include" },
+          "license": { "in": "LICENSE", "to": "LICENSE.md" },
+          "license_dir": { "from": "LICENSES", "to": "LICENSES" },
+          "in": {
+            "win32":  ["bin/slang*.dll", "bin/gfx.dll", "lib/slang*.lib", "lib/gfx.lib"],
+            "darwin": ["lib/libslang*.dylib", "lib/libgfx*.dylib"],
+            "linux":  ["lib/libslang*.so*", "lib/libgfx*.so*"]
+          }
+        },
+        {
+          "tree": "exe", "name": "slang",
+          "license": { "in": "LICENSE", "to": "LICENSE.md" },
+          "license_dir": { "from": "LICENSES", "to": "LICENSES" },
+          "in": {
+            "win32":  ["bin/slang.exe", "bin/slangc.exe", "bin/slangd.exe", "bin/slangi.exe", "bin/*.slang", "bin/slang*.dll", "bin/gfx.dll"],
+            "darwin": ["bin/slang", "bin/slangc", "bin/slangd", "bin/slangi", "bin/*.slang", "lib/libslang*.dylib", "lib/libgfx*.dylib"],
+            "linux":  ["bin/slang", "bin/slangc", "bin/slangd", "bin/slangi", "bin/*.slang", "lib/libslang*.so*", "lib/libgfx*.so*"]
+          }
+        }
+      ]
+    },
+
+    "KTX": {
+      "source": "prebuilt",
+      "version": "4.4.2",
+      "assets": {
+        "x64/win32":      { "url": "https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Windows-x64.exe", "archive": "7z" },
+        "aarch64/win32":  { "url": "https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Windows-arm64.exe", "archive": "7z" },
+        "x64/darwin":     { "url": "https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Darwin-x86_64.pkg", "archive": "7z" },
+        "aarch64/darwin": { "url": "https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Darwin-arm64.pkg", "archive": "7z" },
+        "x64/linux":      { "url": "https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Linux-x86_64.tar.bz2", "archive": "tar.bz2" },
+        "aarch64/linux":  { "url": "https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Linux-arm64.tar.bz2", "archive": "tar.bz2" }
+      },
+      "outputs": [
+        {
+          "tree": "lib", "name": "KTX", "link": "shared",
+          "include": { "from": "**/include", "to": "include" },
+          "in": {
+            "win32":  ["**/bin/ktx.dll", "**/lib/ktx.lib"],
+            "darwin": ["**/lib/libktx.*.dylib"],
+            "linux":  ["**/lib/libktx.so*"]
+          }
+        }
+      ]
+    },
+
+    "XeSS": {
+      "source": "prebuilt",
+      "version": "3.0.1",
+      "assets": {
+        "x64/win32": { "url": "https://github.com/intel/xess/releases/download/v3.0.1/XeSS_SDK_3.0.1.zip", "archive": "zip" }
+      },
+      "outputs": [
+        {
+          "tree": "lib", "name": "XeSS", "link": "shared",
+          "include": { "from": "inc", "to": "include" },
+          "in": { "win32": ["bin/libxess.dll", "lib/libxess.lib"] }
+        }
+      ]
+    },
+
+    "WinPixEventRuntime": {
+      "source": "prebuilt",
+      "version": "1.0.240308001",
+      "assets": {
+        "x64/win32":     { "url": "https://www.nuget.org/api/v2/package/WinPixEventRuntime/1.0.240308001", "archive": "zip", "tokens": { "pkg_arch": "x64" } },
+        "aarch64/win32": { "url": "https://www.nuget.org/api/v2/package/WinPixEventRuntime/1.0.240308001", "archive": "zip", "tokens": { "pkg_arch": "ARM64" } }
+      },
+      "outputs": [
+        {
+          "tree": "lib", "name": "WinPixEventRuntime", "link": "shared",
+          "include": { "from": "Include/WinPixEventRuntime", "to": "include/WinPixEventRuntime" },
+          "in": { "win32": ["bin/{pkg_arch}/WinPixEventRuntime.dll", "bin/{pkg_arch}/WinPixEventRuntime.lib"] }
+        }
+      ]
+    },
+
+    "FSR": {
+      "source": "prebuilt",
+      "version": "2.3.0",
+      "assets": {
+        "x64/win32": { "url": "https://github.com/GPUOpen-LibrariesAndSDKs/FidelityFX-SDK/releases/download/v2.3.0/FidelityFX-Samples-v2.3.0-prebuilt.zip", "archive": "zip" }
+      },
+      "outputs": [
+        {
+          "tree": "lib", "name": "FSR", "link": "shared",
+          "in": { "win32": ["**/ffx_fsr2*.dll", "**/ffx_fsr2*.lib"] }
+        }
+      ]
+    },
+
+    "MoltenVK": {
+      "source": "build",
+      "version": "1.4.1",
+      "upstream": { "git": "https://github.com/KhronosGroup/MoltenVK.git", "tag": "v1.4.1" },
+      "platforms": [
+        { "arch": "x64", "os": "darwin" },
+        { "arch": "aarch64", "os": "darwin" }
+      ],
+      "build": {
+        "darwin": [
+          "cd \"$SRC\" && ./fetchDependencies --macos",
+          "cd \"$SRC\" && make macos"
+        ]
+      },
+      "outputs": [
+        {
+          "tree": "lib", "name": "MoltenVK", "link": "shared",
+          "include": { "from": "Package/Release/MoltenVK/include/MoltenVK", "to": "include/MoltenVK" },
+          "license": { "in": "LICENSE", "to": "LICENSE.md" },
+          "in": {
+            "darwin": [
+              "Package/Release/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib",
+              "Package/Release/MoltenVK/dynamic/dylib/macOS/MoltenVK_icd.json"
+            ]
+          }
+        }
+      ]
+    },
+
+    "vulkan-loader": {
+      "source": "build",
+      "version": "1.4.350.1",
+      "upstream": { "git": "https://github.com/KhronosGroup/Vulkan-Loader.git", "tag": "vulkan-sdk-1.4.350.1" },
+      "platforms": [
+        { "arch": "x64", "os": "darwin" },
+        { "arch": "aarch64", "os": "darwin" }
+      ],
+      "build": {
+        "darwin": [
+          "cmake -S \"$SRC\" -B \"$SRC/build\" -DUPDATE_DEPS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=$OSX_ARCH -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0",
+          "cmake --build \"$SRC/build\" --config Release --parallel $JOBS"
+        ]
+      },
+      "outputs": [
+        {
+          "tree": "lib", "name": "vulkan-loader", "link": "shared",
+          "license": { "in": "LICENSE.txt", "to": "LICENSE.md" },
+          "license_dir": { "from": "LICENSES", "to": "LICENSES" },
+          "in": { "darwin": ["build/loader/libvulkan.*.dylib"] }
+        }
+      ]
+    }
+  }
+}
