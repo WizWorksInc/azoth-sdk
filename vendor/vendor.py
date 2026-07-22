@@ -225,6 +225,14 @@ def apply_output(exdir: Path, out: dict, arch: str, os_: str, version: str,
     (root / "VERSION.txt").write_text(version + "\n", encoding="utf-8")
 
 
+def asset_sources(asset: dict) -> list[dict]:
+    # An asset is one or more archives merged into a single extraction tree. The
+    # single-archive form carries url/archive on the asset itself. The multi
+    # archive form lists them under "sources" (for example DLLs from a release
+    # bundle plus headers from the source tag). Outputs glob across the merger.
+    return asset["sources"] if "sources" in asset else [asset]
+
+
 def cmd_fetch(args: argparse.Namespace) -> int:
     data = load()
     lib = data["libraries"].get(args.library)
@@ -242,10 +250,11 @@ def cmd_fetch(args: argparse.Namespace) -> int:
     work.mkdir(parents=True, exist_ok=True)
     stage = Path(args.stage).resolve()
 
-    archive_path = work / ("dl" + os.path.splitext(asset["url"])[1] or "dl.bin")
-    download(asset["url"], archive_path)
     exdir = work / "ex"
-    extract(archive_path, asset["archive"], exdir)
+    for i, src in enumerate(asset_sources(asset)):
+        archive_path = work / f"dl{i}{os.path.splitext(src['url'])[1] or '.bin'}"
+        download(src["url"], archive_path)
+        extract(archive_path, src["archive"], exdir)
 
     for out in lib["outputs"]:
         apply_output(exdir, out, args.arch, args.os, version, stage, tokens)

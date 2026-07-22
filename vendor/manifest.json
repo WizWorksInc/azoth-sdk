@@ -122,20 +122,25 @@
 
     "FSR": {
       "source": "prebuilt",
-      "version": "2.0.0",
+      "version": "2.3.0",
       "assets": {
-        "x64/win32": { "url": "https://github.com/GPUOpen-LibrariesAndSDKs/FidelityFX-SDK/releases/download/v2.0.0/FidelityFX-SDK-v2.0.0.zip", "archive": "zip" }
+        "x64/win32": {
+          "sources": [
+            { "url": "https://github.com/GPUOpen-LibrariesAndSDKs/FidelityFX-SDK/releases/download/v2.3.0/FidelityFX-Samples-v2.3.0-prebuilt.zip", "archive": "zip" },
+            { "url": "https://github.com/GPUOpen-LibrariesAndSDKs/FidelityFX-SDK/archive/refs/tags/v2.3.0.tar.gz", "archive": "tar.gz" }
+          ]
+        }
       },
       "outputs": [
         {
           "tree": "lib", "name": "FSR", "link": "shared",
-          "include": { "from": "Kits/FidelityFX/api/include", "to": "include" },
+          "include": { "from": "**/Kits/FidelityFX/api/include", "to": "include" },
           "in": {
             "win32": [
-              "Kits/FidelityFX/signedbin/amd_fidelityfx_loader_dx12.dll",
-              "Kits/FidelityFX/signedbin/amd_fidelityfx_loader_dx12.lib",
-              "Kits/FidelityFX/signedbin/amd_fidelityfx_upscaler_dx12.dll",
-              "Kits/FidelityFX/signedbin/amd_fidelityfx_framegeneration_dx12.dll"
+              "**/Samples/Upscalers/FidelityFX_FSR/dx12/x64/Release/amd_fidelityfx_loader_dx12.dll",
+              "**/Samples/Upscalers/FidelityFX_FSR/dx12/x64/Release/amd_fidelityfx_upscaler_dx12.dll",
+              "**/Samples/Upscalers/FidelityFX_FSR/dx12/x64/Release/amd_fidelityfx_framegeneration_dx12.dll",
+              "**/Kits/FidelityFX/signedbin/amd_fidelityfx_loader_dx12.lib"
             ]
           }
         }
