@@ -211,7 +211,7 @@
       "license_id": "BSD-3-Clause",
       "upstream": {
         "git": "https://github.com/wolfpld/tracy.git",
-        "commit": "8555514d59af503ae67e7ee3770b13ea01fa1839"
+        "commit": "e20c716b8024f6faf263bf32b10f0adc0fee36e9"
       },
       "platforms": [
         { "arch": "x64", "os": "win32" },
