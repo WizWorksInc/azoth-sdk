@@ -57,7 +57,12 @@ jobs:
       - name: Pack stage
         # Artifact upload zips the payload, which forces every file to 644 and
         # dereferences symlinks. Ship a tar so modes and links survive the trip.
-        run: tar -C "$RUNNER_TEMP/stage" -cf "$RUNNER_TEMP/stage.tar" .
+        shell: bash
+        run: |
+          # A bare D:\... archive name reads as a remote host to tar, so normalise
+          # the separators and name the archive relative to the temp dir.
+          cd "${RUNNER_TEMP//\\//}"
+          tar -cf stage.tar -C stage .
       - uses: actions/upload-artifact@v6
         with:
           name: stage-fetch-${{ matrix.library }}-${{ matrix.arch }}-${{ matrix.os }}
@@ -105,7 +110,11 @@ jobs:
             --stage "$RUNNER_TEMP/stage"
       - name: Pack stage
         shell: bash
-        run: tar -C "$RUNNER_TEMP/stage" -cf "$RUNNER_TEMP/stage.tar" .
+        run: |
+          # A bare D:\... archive name reads as a remote host to tar, so normalise
+          # the separators and name the archive relative to the temp dir.
+          cd "${RUNNER_TEMP//\\//}"
+          tar -cf stage.tar -C stage .
       - uses: actions/upload-artifact@v6
         with:
           name: stage-build-${{ matrix.library }}-${{ matrix.arch }}-${{ matrix.os }}
