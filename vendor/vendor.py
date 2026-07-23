@@ -117,7 +117,12 @@ def norm_entries(entries) -> list[tuple[str, str | None, bool]]:
 
 def run(cmd: str, env: dict, cwd: Path | None = None) -> None:
     print(f"$ {cmd}", flush=True)
-    subprocess.run(cmd, shell=True, check=True, env=env, cwd=cwd)
+    # shell=True selects cmd.exe on Windows, which leaves $SRC and friends
+    # unexpanded. Build recipes are posix shell, so use bash on every host.
+    bash = shutil.which("bash")
+    if not bash:
+        sys.exit("bash not found; build recipes are posix shell")
+    subprocess.run([bash, "-c", cmd], check=True, env=env, cwd=cwd)
 
 
 def download(url: str, dest: Path) -> None:
