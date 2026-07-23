@@ -17,7 +17,9 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 MANIFEST = HERE / "manifest.json"
-PREBUILT_RUNNER = "ubuntu-latest"
+# darwin staging needs the macOS toolchain: lipo to thin, and otool plus
+# install_name_tool and codesign to give each dylib an identity that sits beside it.
+PREBUILT_RUNNERS = {"darwin": "macos-14", "win32": "ubuntu-latest", "linux": "ubuntu-latest"}
 BUILD_RUNNERS = {
     ("x64", "darwin"): "macos-14",
     ("aarch64", "darwin"): "macos-14",
@@ -81,7 +83,7 @@ def cmd_matrix(args: argparse.Namespace) -> int:
         elif args.kind == "fetch" and lib["source"] == "prebuilt":
             for akey in lib["assets"]:
                 arch, os_ = akey.split("/")
-                include.append({"library": name, "arch": arch, "os": os_, "runner": PREBUILT_RUNNER})
+                include.append({"library": name, "arch": arch, "os": os_, "runner": PREBUILT_RUNNERS[os_]})
     emit_output("matrix", json.dumps({"include": include}))
     return 0
 
@@ -123,6 +125,13 @@ def download(url: str, dest: Path) -> None:
     req = urllib.request.Request(url, headers={"User-Agent": "azoth-vendor"})
     with urllib.request.urlopen(req) as r, open(dest, "wb") as f:
         shutil.copyfileobj(r, f)
+
+
+def sevenzip() -> str:
+    tool = shutil.which("7z") or shutil.which("7zz") or shutil.which("7za")
+    if not tool:
+        sys.exit("7z not found (p7zip-full on linux, sevenzip on macos)")
+    return tool
 
 
 def extract_zip(archive: Path, dest: Path) -> None:
@@ -177,13 +186,17 @@ def extract(archive: Path, kind: str, dest: Path) -> None:
             shutil.copytree(mnt, dest / "dmg", dirs_exist_ok=True, symlinks=True)
             run(f'hdiutil detach "{mnt}"', os.environ.copy())
         else:
-            run(f'7z x -y -o"{dest}" "{archive}"', os.environ.copy())
+            run(f'{sevenzip()} x -y -o"{dest}" "{archive}"', os.environ.copy())
     elif kind == "7z":
-        run(f'7z x -y -o"{dest}" "{archive}"', os.environ.copy())
+        run(f'{sevenzip()} x -y -o"{dest}" "{archive}"', os.environ.copy())
     elif kind == "pkg":
         # A macOS flat package is a xar holding component .pkg dirs, each with the
-        # real files in a gzipped cpio Payload. Unpack both layers.
-        run(f'7z x -y -o"{dest}" "{archive}"', os.environ.copy())
+        # real files in a gzipped cpio Payload. Unpack both layers. xar ships with
+        # macOS, so a darwin runner needs nothing installed to read one.
+        if shutil.which("xar"):
+            run(f'xar -xf "{archive}" -C "{dest}"', os.environ.copy())
+        else:
+            run(f'{sevenzip()} x -y -o"{dest}" "{archive}"', os.environ.copy())
         for payload in sorted(dest.rglob("Payload")):
             run(f'bsdtar -xf "{payload}" -C "{payload.parent}"', os.environ.copy())
     else:
@@ -217,7 +230,8 @@ def discover_license(exdir: Path) -> Path | None:
 def thin(path: Path, dest: Path, arch: str) -> bool:
     tool = shutil.which("lipo") or shutil.which("llvm-lipo")
     if not tool:
-        return False
+        # Silently skipping ships the same universal binary into both darwin cells.
+        sys.exit("lipo not found; darwin staging needs a macos runner")
     info = subprocess.run([tool, "-info", str(path)], capture_output=True, text=True).stdout
     if "Non-fat" in info:
         return False
@@ -242,6 +256,56 @@ def place(src: Path, bindir: Path, as_name: str | None, os_: str, osx_arch: str)
         if os.access(src, os.X_OK):
             dest.chmod(dest.stat().st_mode | 0o111)
     verify_placed(src, dest)
+
+
+def dylib_id(path: Path) -> str | None:
+    # otool -D prints the file name, then LC_ID_DYLIB on the next line when the
+    # Mach-O carries one. Loadable modules and executables have no id.
+    r = subprocess.run(["otool", "-D", str(path)], capture_output=True, text=True)
+    if r.returncode != 0:
+        return None
+    lines = [line.strip() for line in r.stdout.splitlines()]
+    return lines[1] if len(lines) > 1 and lines[1] else None
+
+
+def rpath_neighbour(ident: str, names: set[str]) -> bool:
+    # A dylib is resolvable when its id names a file we ship in the same cell.
+    # libktx.4.4.2.dylib pointing at @rpath/libktx.4.dylib is correct, because we
+    # stage that compatibility symlink beside it.
+    return ident.startswith("@rpath/") and ident[len("@rpath/"):] in names
+
+
+def fix_darwin_ids(bindir: Path) -> None:
+    # Renaming a file through "as", or thinning it, leaves LC_ID_DYLIB pointing at
+    # a path we never ship, and every consumer inherits that dead path. Runs once
+    # per cell, after every file lands, so sibling symlinks are already in place.
+    if not bindir.is_dir():
+        return
+    for tool in ("otool", "install_name_tool", "codesign"):
+        if not shutil.which(tool):
+            sys.exit(f"{tool} not found; darwin staging needs a macos runner")
+    names = {p.name for p in bindir.iterdir()}
+    for p in sorted(bindir.iterdir()):
+        if p.is_symlink() or not p.is_file():
+            continue
+        ident = dylib_id(p)
+        if ident is None or rpath_neighbour(ident, names):
+            continue
+        run(f'install_name_tool -id "@rpath/{p.name}" "{p}"', os.environ.copy())
+        # install_name_tool invalidates the signature, and arm64 will not load a
+        # dylib whose signature is stale, so re-sign ad-hoc.
+        run(f'codesign -f -s - "{p}"', os.environ.copy())
+    verify_darwin_ids(bindir)
+
+
+def verify_darwin_ids(bindir: Path) -> None:
+    names = {p.name for p in bindir.iterdir()}
+    for p in sorted(bindir.iterdir()):
+        if p.is_symlink() or not p.is_file():
+            continue
+        ident = dylib_id(p)
+        if ident is not None and not rpath_neighbour(ident, names):
+            sys.exit(f"staged {p} has install name {ident}, which is not beside it")
 
 
 def verify_placed(src: Path, dest: Path) -> None:
@@ -273,6 +337,9 @@ def apply_output(exdir: Path, out: dict, arch: str, os_: str, version: str,
             sys.exit(f"no match for '{pattern}' [{out['name']} {arch}/{os_}]")
         for f in sorted(hits):
             place(f, bindir, as_name, os_, tokens["osx_arch"])
+
+    if os_ == "darwin":
+        fix_darwin_ids(bindir)
 
     inc = per_os(out.get("include"), os_)
     if inc:
@@ -352,6 +419,18 @@ def cmd_fetch(args: argparse.Namespace) -> int:
 
 def clone(upstream: dict, src: Path, env: dict) -> None:
     shutil.rmtree(src, ignore_errors=True)
+    commit = upstream.get("commit")
+    if commit:
+        # --branch takes a tag or a branch, never a bare sha, so fetch the one
+        # commit directly. Needed for upstreams we pin ahead of a release.
+        src.mkdir(parents=True, exist_ok=True)
+        run(f'git init -q "{src}"', env)
+        run(f'git -C "{src}" remote add origin "{upstream["git"]}"', env)
+        run(f'git -C "{src}" fetch -q --depth 1 origin {commit}', env)
+        run(f'git -C "{src}" checkout -q FETCH_HEAD', env)
+        if upstream.get("submodules"):
+            run(f'git -C "{src}" submodule update -q --init --recursive --depth 1', env)
+        return
     recurse = " --recurse-submodules --shallow-submodules" if upstream.get("submodules") else ""
     run(f'git clone --depth 1 --branch {upstream["tag"]}{recurse} "{upstream["git"]}" "{src}"', env)
 
@@ -414,8 +493,9 @@ def lib_origin(lib: dict) -> str:
     if lib["source"] == "build":
         repo = re.sub(r"^https?://github\.com/", "", lib["upstream"]["git"])
         repo = repo[:-4] if repo.endswith(".git") else repo
-        tag = lib["upstream"]["tag"]
-        return f"[{repo} @ {tag}](https://github.com/{repo}/tree/{tag})"
+        ref = lib["upstream"].get("tag") or lib["upstream"]["commit"]
+        label = ref[:9] if len(ref) == 40 else ref
+        return f"[{repo} @ {label}](https://github.com/{repo}/tree/{ref})"
     entries = []
     for asset in lib["assets"].values():
         for src in asset_sources(asset):

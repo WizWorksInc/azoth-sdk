@@ -203,6 +203,73 @@
           "in": { "darwin": ["build/loader/libvulkan.*.dylib"] }
         }
       ]
+    },
+
+    "Tracy": {
+      "source": "build",
+      "version": "0.13.4",
+      "license_id": "BSD-3-Clause",
+      "upstream": {
+        "git": "https://github.com/wolfpld/tracy.git",
+        "commit": "8555514d59af503ae67e7ee3770b13ea01fa1839"
+      },
+      "platforms": [
+        { "arch": "x64", "os": "win32" },
+        { "arch": "aarch64", "os": "win32" },
+        { "arch": "x64", "os": "darwin" },
+        { "arch": "aarch64", "os": "darwin" },
+        { "arch": "x64", "os": "linux" },
+        { "arch": "aarch64", "os": "linux" }
+      ],
+      "build": {
+        "win32": [
+          "cmake -S \"$SRC/profiler\" -B \"$SRC/build/profiler\" -A $MSVC_ARCH",
+          "cmake --build \"$SRC/build/profiler\" --config Release --parallel $JOBS",
+          "cmake -S \"$SRC/capture\" -B \"$SRC/build/capture\" -A $MSVC_ARCH",
+          "cmake --build \"$SRC/build/capture\" --config Release --parallel $JOBS",
+          "cmake -S \"$SRC/csvexport\" -B \"$SRC/build/csvexport\" -A $MSVC_ARCH",
+          "cmake --build \"$SRC/build/csvexport\" --config Release --parallel $JOBS"
+        ],
+        "darwin": [
+          "cmake -S \"$SRC/profiler\" -B \"$SRC/build/profiler\" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=$OSX_ARCH -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0",
+          "cmake --build \"$SRC/build/profiler\" --parallel $JOBS",
+          "cmake -S \"$SRC/capture\" -B \"$SRC/build/capture\" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=$OSX_ARCH -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0",
+          "cmake --build \"$SRC/build/capture\" --parallel $JOBS",
+          "cmake -S \"$SRC/csvexport\" -B \"$SRC/build/csvexport\" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=$OSX_ARCH -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0",
+          "cmake --build \"$SRC/build/csvexport\" --parallel $JOBS"
+        ],
+        "linux": [
+          "cmake -S \"$SRC/profiler\" -B \"$SRC/build/profiler\" -DCMAKE_BUILD_TYPE=Release -DLEGACY=ON",
+          "cmake --build \"$SRC/build/profiler\" --parallel $JOBS",
+          "cmake -S \"$SRC/capture\" -B \"$SRC/build/capture\" -DCMAKE_BUILD_TYPE=Release",
+          "cmake --build \"$SRC/build/capture\" --parallel $JOBS",
+          "cmake -S \"$SRC/csvexport\" -B \"$SRC/build/csvexport\" -DCMAKE_BUILD_TYPE=Release",
+          "cmake --build \"$SRC/build/csvexport\" --parallel $JOBS"
+        ]
+      },
+      "outputs": [
+        {
+          "tree": "exe", "name": "Tracy",
+          "license": { "in": "LICENSE", "to": "LICENSE.md" },
+          "in": {
+            "win32": [
+              "build/profiler/Release/tracy-profiler.exe",
+              "build/capture/Release/tracy-capture.exe",
+              "build/csvexport/Release/tracy-csvexport.exe"
+            ],
+            "darwin": [
+              "build/profiler/tracy-profiler",
+              "build/capture/tracy-capture",
+              "build/csvexport/tracy-csvexport"
+            ],
+            "linux": [
+              "build/profiler/tracy-profiler",
+              "build/capture/tracy-capture",
+              "build/csvexport/tracy-csvexport"
+            ]
+          }
+        }
+      ]
     }
   }
 }
