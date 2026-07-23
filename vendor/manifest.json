@@ -4,6 +4,7 @@
     "SDL3": {
       "source": "prebuilt",
       "version": "3.4.12",
+      "license_id": "Zlib",
       "assets": {
         "x64/win32":     { "url": "https://github.com/libsdl-org/SDL/releases/download/release-3.4.12/SDL3-devel-3.4.12-VC.zip", "archive": "zip", "tokens": { "pkg_arch": "x64" } },
         "aarch64/win32": { "url": "https://github.com/libsdl-org/SDL/releases/download/release-3.4.12/SDL3-devel-3.4.12-VC.zip", "archive": "zip", "tokens": { "pkg_arch": "arm64" } },
@@ -32,6 +33,7 @@
     "slang": {
       "source": "prebuilt",
       "version": "2026.12",
+      "license_id": "Apache-2.0 WITH LLVM-exception",
       "assets": {
         "x64/win32":      { "url": "https://github.com/shader-slang/slang/releases/download/v2026.12/slang-2026.12-windows-x86_64.zip", "archive": "zip" },
         "aarch64/win32":  { "url": "https://github.com/shader-slang/slang/releases/download/v2026.12/slang-2026.12-windows-aarch64.zip", "archive": "zip" },
@@ -68,6 +70,7 @@
     "KTX": {
       "source": "prebuilt",
       "version": "4.4.2",
+      "license_id": "Apache-2.0",
       "assets": {
         "x64/win32":      { "url": "https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Windows-x64.exe", "archive": "7z" },
         "aarch64/win32":  { "url": "https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Windows-arm64.exe", "archive": "7z" },
@@ -93,6 +96,7 @@
     "XeSS": {
       "source": "prebuilt",
       "version": "3.0.1",
+      "license_id": "Intel Simplified Software License",
       "assets": {
         "x64/win32": { "url": "https://github.com/intel/xess/releases/download/v3.0.1/XeSS_SDK_3.0.1.zip", "archive": "zip" }
       },
@@ -109,6 +113,7 @@
     "WinPixEventRuntime": {
       "source": "prebuilt",
       "version": "1.0.240308001",
+      "license_id": "MIT",
       "assets": {
         "x64/win32":     { "url": "https://www.nuget.org/api/v2/package/WinPixEventRuntime/1.0.240308001", "archive": "zip", "tokens": { "pkg_arch": "x64" } },
         "aarch64/win32": { "url": "https://www.nuget.org/api/v2/package/WinPixEventRuntime/1.0.240308001", "archive": "zip", "tokens": { "pkg_arch": "ARM64" } }
@@ -126,6 +131,7 @@
     "FSR": {
       "source": "prebuilt",
       "version": "2.3.0",
+      "license_id": "AMD FidelityFX SDK License (binary redistribution)",
       "assets": {
         "x64/win32": {
           "sources": [
@@ -154,6 +160,7 @@
     "MoltenVK": {
       "source": "prebuilt",
       "version": "1.4.1",
+      "license_id": "Apache-2.0",
       "assets": {
         "x64/darwin":     { "url": "https://github.com/KhronosGroup/MoltenVK/releases/download/v1.4.1/MoltenVK-macos.tar", "archive": "tar" },
         "aarch64/darwin": { "url": "https://github.com/KhronosGroup/MoltenVK/releases/download/v1.4.1/MoltenVK-macos.tar", "archive": "tar" }
@@ -176,6 +183,7 @@
     "vulkan-loader": {
       "source": "build",
       "version": "1.4.350.1",
+      "license_id": "Apache-2.0",
       "upstream": { "git": "https://github.com/KhronosGroup/Vulkan-Loader.git", "tag": "vulkan-sdk-1.4.350.1" },
       "platforms": [
         { "arch": "x64", "os": "darwin" },

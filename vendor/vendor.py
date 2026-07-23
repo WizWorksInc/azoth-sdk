@@ -7,6 +7,7 @@ import json
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tarfile
@@ -124,11 +125,47 @@ def download(url: str, dest: Path) -> None:
         shutil.copyfileobj(r, f)
 
 
+def extract_zip(archive: Path, dest: Path) -> None:
+    # zipfile drops Unix modes and writes symlink entries as regular files holding
+    # the target path, so restore both from the high bits of external_attr.
+    with zipfile.ZipFile(archive) as z:
+        for info in z.infolist():
+            mode = info.external_attr >> 16
+            if stat.S_ISLNK(mode):
+                link = dest / info.filename
+                if not str(link.parent.resolve()).startswith(str(dest.resolve())):
+                    sys.exit(f"unsafe symlink path in {archive.name}: {info.filename}")
+                link.parent.mkdir(parents=True, exist_ok=True)
+                if link.is_symlink() or link.exists():
+                    link.unlink()
+                link.symlink_to(z.read(info).decode())
+                continue
+            out = Path(z.extract(info, dest))
+            if not info.is_dir() and mode & 0o7777:
+                out.chmod(mode & 0o7777)
+    verify_zip_metadata(archive, dest)
+
+
+def verify_zip_metadata(archive: Path, dest: Path) -> None:
+    # Fail loudly rather than staging tools that lost their exec bit or symlinks.
+    with zipfile.ZipFile(archive) as z:
+        for info in z.infolist():
+            if info.is_dir():
+                continue
+            mode = info.external_attr >> 16
+            out = dest / info.filename
+            if not (out.is_symlink() or out.exists()):
+                continue
+            if stat.S_ISLNK(mode) and not out.is_symlink():
+                sys.exit(f"extract lost the symlink {info.filename} from {archive.name}")
+            if not stat.S_ISLNK(mode) and mode & 0o111 and not os.access(out, os.X_OK):
+                sys.exit(f"extract lost the exec bit on {info.filename} from {archive.name}")
+
+
 def extract(archive: Path, kind: str, dest: Path) -> None:
     dest.mkdir(parents=True, exist_ok=True)
     if kind in ("zip", "nupkg"):
-        with zipfile.ZipFile(archive) as z:
-            z.extractall(dest)
+        extract_zip(archive, dest)
     elif kind.startswith("tar"):
         with tarfile.open(archive) as t:
             t.extractall(dest)
@@ -193,12 +230,25 @@ def thin(path: Path, dest: Path, arch: str) -> bool:
 def place(src: Path, bindir: Path, as_name: str | None, os_: str, osx_arch: str) -> None:
     bindir.mkdir(parents=True, exist_ok=True)
     dest = bindir / (as_name or src.name)
-    if os_ == "darwin" and thin(src, dest, osx_arch):
-        pass
+    if dest.is_symlink() or dest.exists():
+        dest.unlink()
+    if src.is_symlink():
+        # Recreate the link. copy2 would dereference it, duplicating the whole
+        # dylib and dropping the soname indirection the loader resolves through.
+        dest.symlink_to(os.readlink(src))
     else:
-        shutil.copy2(src, dest)
-    if os.access(src, os.X_OK):
-        dest.chmod(dest.stat().st_mode | 0o111)
+        if not (os_ == "darwin" and thin(src, dest, osx_arch)):
+            shutil.copy2(src, dest)
+        if os.access(src, os.X_OK):
+            dest.chmod(dest.stat().st_mode | 0o111)
+    verify_placed(src, dest)
+
+
+def verify_placed(src: Path, dest: Path) -> None:
+    if src.is_symlink() and not dest.is_symlink():
+        sys.exit(f"staged {dest} lost the symlink from {src}")
+    if not src.is_symlink() and os.access(src, os.X_OK) and not os.access(dest, os.X_OK):
+        sys.exit(f"staged {dest} lost the exec bit from {src}")
 
 
 def target_root(stage: Path, out: dict, version: str) -> Path:
@@ -381,12 +431,17 @@ def release_body(data: dict) -> str:
     rows = [
         "## Vendored libraries",
         "",
-        "| Library | Version | Type | Platforms | Source |",
-        "| --- | --- | --- | --- | --- |",
+        "| Library | Version | License | Type | Platforms | Source |",
+        "| --- | --- | --- | --- | --- | --- |",
     ]
     for name, lib in data["libraries"].items():
+        lic = lib.get("license_id")
+        if not lic:
+            sys.exit(f"{name} has no license_id in the manifest")
         kind = "prebuilt" if lib["source"] == "prebuilt" else "built from source"
-        rows.append(f"| {name} | {lib['version']} | {kind} | {lib_platforms(lib)} | {lib_origin(lib)} |")
+        rows.append(
+            f"| {name} | {lib['version']} | {lic} | {kind} | {lib_platforms(lib)} | {lib_origin(lib)} |"
+        )
     return "\n".join(rows) + "\n"
 
 
@@ -412,8 +467,16 @@ def cmd_package(args: argparse.Namespace) -> int:
     zipf = out / f"{name}-{version}.zip"
     with zipfile.ZipFile(zipf, "w", zipfile.ZIP_DEFLATED) as z:
         for p in sorted(tree.rglob("*")):
-            if p.is_file():
-                z.write(p, p.relative_to(out))
+            rel = str(p.relative_to(out))
+            if p.is_symlink():
+                # is_file follows the link, so store the link itself. Otherwise the
+                # zip ships a full duplicate of every versioned dylib it points at.
+                info = zipfile.ZipInfo(rel)
+                info.create_system = 3
+                info.external_attr = (stat.S_IFLNK | 0o777) << 16
+                z.writestr(info, os.readlink(p))
+            elif p.is_file():
+                z.write(p, rel)
 
     sums = out / "SHA256SUMS"
     with open(sums, "w", encoding="utf-8") as f:
