@@ -216,7 +216,6 @@
       "platforms": [
         { "arch": "x64", "os": "win32" },
         { "arch": "aarch64", "os": "win32" },
-        { "arch": "x64", "os": "darwin" },
         { "arch": "aarch64", "os": "darwin" },
         { "arch": "x64", "os": "linux" },
         { "arch": "aarch64", "os": "linux" }
