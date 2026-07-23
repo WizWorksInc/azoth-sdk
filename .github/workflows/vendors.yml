@@ -52,10 +52,14 @@ jobs:
             --arch "${{ matrix.arch }}" \
             --os "${{ matrix.os }}" \
             --stage "$RUNNER_TEMP/stage"
+      - name: Pack stage
+        # Artifact upload zips the payload, which forces every file to 644 and
+        # dereferences symlinks. Ship a tar so modes and links survive the trip.
+        run: tar -C "$RUNNER_TEMP/stage" -cf "$RUNNER_TEMP/stage.tar" .
       - uses: actions/upload-artifact@v6
         with:
           name: stage-fetch-${{ matrix.library }}-${{ matrix.arch }}-${{ matrix.os }}
-          path: ${{ runner.temp }}/stage/
+          path: ${{ runner.temp }}/stage.tar
           if-no-files-found: error
           retention-days: 3
 
@@ -80,10 +84,13 @@ jobs:
             --arch "${{ matrix.arch }}" \
             --os "${{ matrix.os }}" \
             --stage "$RUNNER_TEMP/stage"
+      - name: Pack stage
+        shell: bash
+        run: tar -C "$RUNNER_TEMP/stage" -cf "$RUNNER_TEMP/stage.tar" .
       - uses: actions/upload-artifact@v6
         with:
           name: stage-build-${{ matrix.library }}-${{ matrix.arch }}-${{ matrix.os }}
-          path: ${{ runner.temp }}/stage/
+          path: ${{ runner.temp }}/stage.tar
           if-no-files-found: error
           retention-days: 3
 
@@ -99,6 +106,12 @@ jobs:
         with:
           pattern: stage-*
           path: _stages
+      - name: Unpack stages
+        run: |
+          for t in _stages/*/stage.tar; do
+            tar -C "$(dirname "$t")" -xpf "$t"
+            rm "$t"
+          done
       - name: Assemble and package
         id: pkg
         env:
