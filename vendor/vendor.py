@@ -40,6 +40,18 @@ def slug(v: str) -> str:
     return v.replace(".", "_")
 
 
+def canonical_version(version: str, package: str) -> str:
+    # The release input is a bare version like 2026.07.0. Strip a redundant
+    # leading package name or a leading v so the derived names never double up,
+    # which is what produced tags like sdk-azoth-sdk-2026.07.0.
+    v = version.strip()
+    if v.startswith(package + "-"):
+        v = v[len(package) + 1:]
+    if v[:1] == "v" and v[1:2].isdigit():
+        v = v[1:]
+    return v
+
+
 class _Defaults(dict):
     def __missing__(self, key):
         return "{" + key + "}"
@@ -327,10 +339,61 @@ def cmd_build(args: argparse.Namespace) -> int:
     return 0
 
 
+def lib_platforms(lib: dict) -> str:
+    if lib["source"] == "build":
+        return ", ".join(f"{p['arch']}/{p['os']}" for p in lib["platforms"])
+    return ", ".join(lib["assets"].keys())
+
+
+def origin_link(url: str) -> tuple[str, str]:
+    # (label, href) for the release table. Prefer the exact upstream tag page.
+    m = re.match(r"https?://github\.com/([^/]+/[^/]+)", url)
+    if m:
+        repo = m.group(1)
+        tag = re.search(r"/releases/download/([^/]+)/", url) or \
+            re.search(r"/archive/refs/tags/(.+?)(?:\.tar\.gz|\.tgz|\.zip|\.tar\.bz2|\.tar\.xz)$", url)
+        href = f"https://github.com/{repo}/releases/tag/{tag.group(1)}" if tag else f"https://github.com/{repo}"
+        return repo, href
+    m = re.match(r"https?://www\.nuget\.org/api/v2/package/([^/]+)/([^/]+)", url)
+    if m:
+        return f"NuGet {m.group(1)}", f"https://www.nuget.org/packages/{m.group(1)}/{m.group(2)}"
+    return re.sub(r"^https?://([^/]+).*$", r"\1", url), url
+
+
+def lib_origin(lib: dict) -> str:
+    if lib["source"] == "build":
+        repo = re.sub(r"^https?://github\.com/", "", lib["upstream"]["git"])
+        repo = repo[:-4] if repo.endswith(".git") else repo
+        tag = lib["upstream"]["tag"]
+        return f"[{repo} @ {tag}](https://github.com/{repo}/tree/{tag})"
+    entries = []
+    for asset in lib["assets"].values():
+        for src in asset_sources(asset):
+            label, href = origin_link(src["url"])
+            entry = f"[{label}]({href})"
+            if entry not in entries:
+                entries.append(entry)
+    return ", ".join(entries)
+
+
+def release_body(data: dict) -> str:
+    # Only the vendored dependency inventory: what we pinned and where from.
+    rows = [
+        "## Vendored libraries",
+        "",
+        "| Library | Version | Type | Platforms | Source |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    for name, lib in data["libraries"].items():
+        kind = "prebuilt" if lib["source"] == "prebuilt" else "built from source"
+        rows.append(f"| {name} | {lib['version']} | {kind} | {lib_platforms(lib)} | {lib_origin(lib)} |")
+    return "\n".join(rows) + "\n"
+
+
 def cmd_package(args: argparse.Namespace) -> int:
     data = load()
-    version = args.version
     name = data["sdk"]["package"]
+    version = canonical_version(args.version, name)
     stages = Path(args.stages).resolve()
     out = Path(args.out).resolve()
     tree = out / f"{name}-{version}"
@@ -358,7 +421,13 @@ def cmd_package(args: argparse.Namespace) -> int:
             h = hashlib.sha256(a.read_bytes()).hexdigest()
             f.write(f"{h}  {a.name}\n")
 
+    body = out / "RELEASE_BODY.md"
+    body.write_text(release_body(data), encoding="utf-8")
+
     emit_output("package", str(tgz))
+    emit_output("version", version)
+    emit_output("tag", f"sdk-{version}")
+    emit_output("name", f"{name} {version}")
     print(f"packaged {tgz.name}, {zipf.name}")
     return 0
 

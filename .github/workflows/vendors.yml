@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       sdk_version:
-        description: "Version for the SDK release tag"
+        description: "Release version, e.g. 2026.07.0 (the azoth-sdk- prefix, tag, and name are derived automatically)"
         type: string
         required: true
 
@@ -100,15 +100,19 @@ jobs:
           pattern: stage-*
           path: _stages
       - name: Assemble and package
+        id: pkg
+        env:
+          SDK_VERSION: ${{ inputs.sdk_version }}
         run: |
           python vendor/vendor.py package \
             --stages _stages \
             --out dist \
-            --version "${{ inputs.sdk_version }}"
+            --version "$SDK_VERSION"
       - uses: softprops/action-gh-release@v3
         with:
-          tag_name: sdk-${{ inputs.sdk_version }}
-          name: azoth-sdk ${{ inputs.sdk_version }}
+          tag_name: ${{ steps.pkg.outputs.tag }}
+          name: ${{ steps.pkg.outputs.name }}
+          body_path: dist/RELEASE_BODY.md
           files: |
             dist/azoth-sdk-*.tar.gz
             dist/azoth-sdk-*.zip
