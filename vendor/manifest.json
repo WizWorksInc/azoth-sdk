@@ -223,27 +223,27 @@
       ],
       "build": {
         "win32": [
-          "cmake -S \"$SRC/profiler\" -B \"$SRC/build/profiler\" -A $MSVC_ARCH",
+          "cmake -S \"$SRC/profiler\" -B \"$SRC/build/profiler\" -A $MSVC_ARCH -DNO_ISA_EXTENSIONS=ON",
           "cmake --build \"$SRC/build/profiler\" --config Release --parallel $JOBS",
-          "cmake -S \"$SRC/capture\" -B \"$SRC/build/capture\" -A $MSVC_ARCH",
+          "cmake -S \"$SRC/capture\" -B \"$SRC/build/capture\" -A $MSVC_ARCH -DNO_ISA_EXTENSIONS=ON",
           "cmake --build \"$SRC/build/capture\" --config Release --parallel $JOBS",
-          "cmake -S \"$SRC/csvexport\" -B \"$SRC/build/csvexport\" -A $MSVC_ARCH",
+          "cmake -S \"$SRC/csvexport\" -B \"$SRC/build/csvexport\" -A $MSVC_ARCH -DNO_ISA_EXTENSIONS=ON",
           "cmake --build \"$SRC/build/csvexport\" --config Release --parallel $JOBS"
         ],
         "darwin": [
-          "cmake -S \"$SRC/profiler\" -B \"$SRC/build/profiler\" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=$OSX_ARCH -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0",
+          "cmake -S \"$SRC/profiler\" -B \"$SRC/build/profiler\" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=$OSX_ARCH -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 -DNO_ISA_EXTENSIONS=ON",
           "cmake --build \"$SRC/build/profiler\" --parallel $JOBS",
-          "cmake -S \"$SRC/capture\" -B \"$SRC/build/capture\" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=$OSX_ARCH -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0",
+          "cmake -S \"$SRC/capture\" -B \"$SRC/build/capture\" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=$OSX_ARCH -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 -DNO_ISA_EXTENSIONS=ON",
           "cmake --build \"$SRC/build/capture\" --parallel $JOBS",
-          "cmake -S \"$SRC/csvexport\" -B \"$SRC/build/csvexport\" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=$OSX_ARCH -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0",
+          "cmake -S \"$SRC/csvexport\" -B \"$SRC/build/csvexport\" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=$OSX_ARCH -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 -DNO_ISA_EXTENSIONS=ON",
           "cmake --build \"$SRC/build/csvexport\" --parallel $JOBS"
         ],
         "linux": [
-          "cmake -S \"$SRC/profiler\" -B \"$SRC/build/profiler\" -DCMAKE_BUILD_TYPE=Release -DLEGACY=ON",
+          "cmake -S \"$SRC/profiler\" -B \"$SRC/build/profiler\" -DCMAKE_BUILD_TYPE=Release -DLEGACY=ON -DNO_ISA_EXTENSIONS=ON",
           "cmake --build \"$SRC/build/profiler\" --parallel $JOBS",
-          "cmake -S \"$SRC/capture\" -B \"$SRC/build/capture\" -DCMAKE_BUILD_TYPE=Release",
+          "cmake -S \"$SRC/capture\" -B \"$SRC/build/capture\" -DCMAKE_BUILD_TYPE=Release -DNO_ISA_EXTENSIONS=ON",
           "cmake --build \"$SRC/build/capture\" --parallel $JOBS",
-          "cmake -S \"$SRC/csvexport\" -B \"$SRC/build/csvexport\" -DCMAKE_BUILD_TYPE=Release",
+          "cmake -S \"$SRC/csvexport\" -B \"$SRC/build/csvexport\" -DCMAKE_BUILD_TYPE=Release -DNO_ISA_EXTENSIONS=ON",
           "cmake --build \"$SRC/build/csvexport\" --parallel $JOBS"
         ]
       },
